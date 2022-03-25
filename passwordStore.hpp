@@ -129,21 +129,23 @@ public:
 	std::vector<std::vector<PasswordEntry>> getEntries() {
 		std::vector<std::vector<PasswordEntry>> entries;
 
-		auto usenameIterFunc = [](fs::path path, std::vector<PasswordEntry>& entries){
+		auto usenameIterFunc = [](fs::path path){
+			std::vector<PasswordEntry> entries;
 			fs::directory_iterator folderIter(path);
 			std::string service = path.filename();
 			for (const auto& item : folderIter) {
 				if (!item.is_regular_file() || item.path().extension() != ".gpg") continue;
 				entries.emplace_back(item.path(), service);
 			}
+			return entries;
 		};
 
 		fs::directory_iterator folderIter(storePath);
 		for (const auto& item : folderIter) {
 			if (item.is_directory()) {
 				if (item.path().filename() == ".git") continue;
-				auto& serviceEntries = entries.emplace_back();
-				usenameIterFunc(item.path(), serviceEntries);
+				auto userEntries = usenameIterFunc(item.path());
+				if (userEntries.size() > 0) entries.emplace_back(std::move(userEntries));
 			} else {
 				if (!item.is_regular_file() || item.path().extension() != ".gpg") continue;
 				entries.push_back(std::vector<PasswordEntry>{ item.path() });

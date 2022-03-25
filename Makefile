@@ -23,6 +23,9 @@ clean:
 	rm $(BIN) || true
 	rm $(CLANGDINFO) || true
 
+install: make
+	cp $(BIN) /usr/local/bin/$(BIN)
+
 # Rules for compilation
 
 $(BIN): $(OBJS) $(OBJ)

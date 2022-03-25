@@ -5,12 +5,12 @@
 #include "notifications.hpp"
 
 #include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <random>
 #include <optional>
 #include <functional>
 #include <stdexcept>
-#include <unistd.h>
 
 using namespace std::literals;
 
@@ -42,6 +42,7 @@ struct DmenuResult {
 		if (entryIt != end(entries)) entry = *entryIt;
 	}
 
+	bool isEmpty() { return value.empty() && flags.empty(); }
 	bool isCommand() { return !entry || !flags.empty(); }
 
 	T& operator*() { return *entry; }
@@ -50,7 +51,7 @@ struct DmenuResult {
 
 DmenuResult<std::vector<PasswordEntry>> askService(std::vector<std::vector<PasswordEntry>>& services) {
 	std::vector<std::string> serviceOptions(services.size());
-	std::transform(begin(services), end(services), begin(serviceOptions), [](const auto& service){ return service[0].service; });
+	std::transform(begin(services), end(services), begin(serviceOptions), [](const auto& service){  return service[0].service; });
 
 	DmenuFlags flags = defaultFlags;
 	flags.lines = std::min((int)services.size(), maxLines);
@@ -143,8 +144,9 @@ int handleServiceCommand(DmenuResult<std::vector<PasswordEntry>>& result) {
 		else 
 			return EXIT_SUCCESS;
 		
-		// FIXME: validate this input (check empty)
 		std::string username = askValue("Enter Username:");
+		if (username.empty()) return EXIT_FAILURE; // TODO: notify this
+
 		std::string password = askPassword("Enter Password:");
 
 		PasswordEntry newEntry(service, username, password);
@@ -168,6 +170,7 @@ int main() {
 	auto entries = passwordStore.getEntries();
 
 	auto serviceResult = askService(entries);
+	if (serviceResult.isEmpty()) return EXIT_SUCCESS;
 	if (serviceResult.isCommand()) return handleServiceCommand(serviceResult);
 
 	if (serviceResult->size() == 1) {
@@ -180,6 +183,6 @@ int main() {
 		copyInfo(*userResult);
 		return EXIT_SUCCESS;
 	}
-
+	if (userResult.isEmpty()) return EXIT_SUCCESS;
 	return handleUserCommand(serviceResult.value, userResult);
 }
