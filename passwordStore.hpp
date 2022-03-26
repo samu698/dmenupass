@@ -168,7 +168,7 @@ public:
 
 		while (std::getline(strStream, line)) {
 			std::string tocmp = lowerTrimmed(line);
-			if (tocmp.find("username:") == 0 || tocmp.find("login:")) {
+			if (tocmp.find("username:") == 0 || tocmp.find("login:") == 0) {
 				auto usernameBeg = begin(line) + line.find(":") + 1;
 				usernameBeg = std::find_if_not(usernameBeg, line.end(), isspace);
 				entry.username = std::string(usernameBeg, end(line));
