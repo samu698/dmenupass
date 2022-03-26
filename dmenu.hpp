@@ -3,6 +3,7 @@
 #include "execWrapper.hpp"
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 struct DmenuFlags {
 	enum ShowPos { TOP, BOTTOM, CENTER } showPos = TOP;
@@ -37,6 +38,7 @@ class Dmenu {
 	std::vector<std::string> options;
 	bool done = false;
 	std::string out;
+	int exitCode;
 
 	std::string run() {
 		dmenuProcess.run();
@@ -46,17 +48,18 @@ class Dmenu {
 
 		std::string out;
 		std::getline(dmenuProcess.stream(), out);
-		dmenuProcess.join();
+		exitCode = dmenuProcess.join();
 		return out;
 	}
 public:
-	Dmenu(std::vector<std::string> options, const DmenuFlags& flags = {}) : dmenuProcess("dmenu", flags.getFlagsVec()), options(options) {}
+	Dmenu(const std::vector<std::string>& options, const DmenuFlags& flags = {}) : dmenuProcess("dmenu", flags.getFlagsVec()), options(options) {}
 
 	std::string result() {
-		if (done) return out;
-
-		out = run();
-		done = true;
+		if (!done) {
+			out = run();
+			done = true;
+		}
+		if (exitCode != EXIT_SUCCESS) throw std::runtime_error("dmenu error");
 		return out;
 	}
 };
